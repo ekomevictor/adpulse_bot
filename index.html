@@ -273,7 +273,7 @@
         const user = tg.initDataUnsafe?.user;
         const userName = user ? (user.first_name || "Vic") : "Vic";
         const userId = user ? user.id : "12345";
-        const botUsername = "YOUR_BOT_USERNAME"; 
+        const botUsername = "@AdPulseRewardBot"; 
 
         document.getElementById('userNameDisplay').innerText = userName;
         document.getElementById('refLink').value = `https://t.me/${botUsername}?start=ref_${userId}`;
@@ -286,7 +286,7 @@
         let adController;
         try {
             if (window.Adsgram) {
-                adController = window.Adsgram.init({ blockId: "YOUR_ADSGRAM_BLOCK_ID" });
+                adController = window.Adsgram.init({ blockId: "39840" });
             }
         } catch (e) {
             console.log("Adsgram SDK initialized in simulation mode.");
