@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AdPulse Reward Bot</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Adsgram SDK -->
+    <script src="https://sad.adsgram.ai/js/adsgram.min.js"></script>
+    <style>
+        body {
+            background-color: #030712 !important;
+            color: #f1f5f9 !important;
+            margin: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.25); }
+            50% { box-shadow: 0 0 35px rgba(59, 130, 246, 0.5); }
+        }
+        @keyframes modal-pop {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .card-glow { animation: pulse-glow 3s infinite; }
+        .modal-animation { animation: modal-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        .sponsor-banner {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8)), 
+                        url('https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=1000&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+    </style>
+</head>
+<body class="bg-[#030712] text-slate-100 flex flex-col min-h-screen justify-between pb-20 overflow-x-hidden relative">
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 -translate-y-20 opacity-0 transition-all duration-300 z-50 bg-slate-900/95 border border-blue-500/50 px-3.5 py-2.5 rounded-2xl shadow-xl flex items-center space-x-2.5 max-w-xs w-full backdrop-blur-md pointer-events-none">
+        <span id="toastIcon" class="text-lg">📺</span>
+        <p id="toastMessage" class="text-[11px] font-medium text-slate-200"></p>
+    </div>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-[#030712]/90 backdrop-blur-md px-3.5 py-2.5 border-b border-slate-800/80 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+            <div class="relative">
+                <div id="userAvatar" class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center font-black text-slate-950 text-xs overflow-hidden shadow">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop" alt="Avatar" class="w-full h-full object-cover">
+                </div>
+                <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-slate-900 rounded-full"></span>
+            </div>
+            <div>
+                <h1 id="userNameDisplay" class="text-[11px] font-black tracking-wider text-blue-400">Vic</h1>
+                <p class="text-[8px] text-slate-400 uppercase tracking-widest font-semibold">Ad Reward Bot</p>
+            </div>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-full flex items-center space-x-1.5 shadow-inner">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+            <span class="text-[9px] text-slate-300 font-medium">Online</span>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="p-3.5 flex-1 max-w-sm mx-auto w-full space-y-3">
+
+        <!-- TAB 1: HOME -->
+        <div id="tab-home" class="space-y-3">
+            
+            <!-- CUSTOM SPONSOR BANNER SLOT -->
+            <div onclick="openSponsorLink()" class="sponsor-banner border border-blue-500/30 rounded-2xl p-3.5 relative overflow-hidden shadow-lg cursor-pointer hover:border-blue-500/60 transition group">
+                <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]"></div>
+                <div class="relative z-10 flex items-center justify-between">
+                    <div class="space-y-0.5 pr-2">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[7px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider">Sponsored Ad</span>
+                            <span class="text-[8px] text-slate-400">Promote Here</span>
+                        </div>
+                        <h2 class="text-[11px] font-bold text-white group-hover:text-blue-300 transition line-clamp-1">Launch Your Mini-App & Reach 100k+ Users</h2>
+                        <p class="text-[9px] text-slate-300 line-clamp-1">High conversion banner slots available. Tap to partner.</p>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl overflow-hidden border border-blue-500/40 shadow-sm flex-shrink-0">
+                        <img src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=200&auto=format&fit=crop" alt="Sponsor" class="w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Balance Card -->
+            <div class="bg-slate-900/90 border border-blue-500/30 rounded-2xl p-4 text-center card-glow relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl pointer-events-none"></div>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Total Earned Balance</p>
+                <div class="flex items-center justify-center space-x-1.5 my-1.5">
+                    <span class="text-2xl">🪙</span>
+                    <h2 id="gemCount" class="text-3xl font-black text-blue-300 tracking-tight">0</h2>
+                </div>
+                <div class="inline-flex items-center space-x-1 bg-emerald-500/10 border border-emerald-500/20 px-3 py-0.5 rounded-full">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    <span class="text-[10px] text-emerald-400 font-semibold">≈ <span id="usdtValue">0.00</span> USDT</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+                <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3 space-y-0.5 relative overflow-hidden">
+                    <p class="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Per Ad Reward</p>
+                    <p class="text-xs font-black text-blue-400">+50 Coins</p>
+                    <p class="text-[8px] text-slate-500">Instant credit</p>
+                </div>
+                <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3 space-y-0.5 relative overflow-hidden">
+                    <p class="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Daily Limit</p>
+                    <p class="text-xs font-black text-emerald-400">50 Ads / Day</p>
+                    <p class="text-[8px] text-slate-500">Resets daily</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 space-y-1.5">
+                <div class="flex justify-between text-[10px] text-slate-400 font-medium">
+                    <span>Progress to Payout</span>
+                    <span id="progressText" class="text-blue-400 font-bold">0 / 5,000 Coins</span>
+                </div>
+                <div class="w-full bg-slate-950 rounded-full h-2.5 p-0.5 border border-slate-800 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-blue-500 to-emerald-400 h-full rounded-full transition-all duration-500 shadow-sm" style="width: 0%"></div>
+                </div>
+                <p class="text-[9px] text-slate-500 text-center">Minimum threshold: 5,000 Coins (0.10 USDT)</p>
+            </div>
+
+            <!-- Primary Action: Watch Ad to Earn -->
+            <button id="watchAdBtn" onclick="watchAd()" class="w-full bg-gradient-to-r from-blue-500 via-sky-500 to-indigo-600 hover:opacity-95 text-slate-950 font-black py-3.5 rounded-xl shadow-lg shadow-blue-500/20 transition transform active:scale-95 text-xs flex items-center justify-center space-x-1.5">
+                <span class="text-base">📺</span>
+                <span id="watchAdText">WATCH AD TO EARN (+50 COINS)</span>
+            </button>
+        </div>
+
+        <!-- TAB 2: EARN -->
+        <div id="tab-earn" class="space-y-3 hidden">
+            <h2 class="text-sm font-bold text-blue-400 flex items-center space-x-1.5"><span>⚡</span><span>Task & Reward Hub</span></h2>
+            
+            <!-- Daily Claim Card -->
+            <div class="bg-slate-900/90 border border-blue-500/30 rounded-xl p-3.5 space-y-2.5 shadow">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-xl flex-shrink-0">🎁</div>
+                    <div>
+                        <h3 class="text-xs font-bold text-slate-200">Daily Claim</h3>
+                        <p class="text-[10px] text-slate-400">Claim free +10 gems every 24 hours.</p>
+                    </div>
+                </div>
+                <button id="dailyClaimBtn" onclick="claimDailyReward()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:opacity-95 text-slate-950 font-black py-2.5 rounded-xl text-[11px] transition shadow-md shadow-blue-500/25">
+                    CLAIM +10 GEMS
+                </button>
+            </div>
+
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 space-y-2.5 shadow">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-base overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1614680376593-902f749f7ffc?q=80&w=150&auto=format&fit=crop" alt="Channel" class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-bold text-slate-200">Join Official Channel</h3>
+                        <p class="text-[10px] text-slate-400">Subscribe for drop announcements.</p>
+                    </div>
+                </div>
+                <div class="flex space-x-2">
+                    <a href="https://t.me/YOUR_MAIN_CHANNEL" target="_blank" onclick="markJoined()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-blue-400 border border-blue-500/30 font-bold py-2 rounded-lg text-[11px] text-center transition">Open</a>
+                    <button onclick="claimChannelBonus()" class="flex-1 bg-blue-500 hover:bg-blue-400 text-slate-950 font-bold py-2 rounded-lg text-[11px] transition shadow">Claim +500</button>
+                </div>
+            </div>
+
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 space-y-2.5 shadow">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-9 h-9 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-base">🎁</div>
+                    <div>
+                        <h3 class="text-xs font-bold text-slate-200">Secret Promo Code</h3>
+                        <p class="text-[10px] text-slate-400">Redeem sponsor code drops.</p>
+                    </div>
+                </div>
+                <input type="text" id="promoInput" placeholder="ENTER CODE (E.G. ADSPULSE500)" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-[11px] text-white uppercase focus:outline-none focus:border-blue-500 tracking-wider">
+                <button onclick="redeemPromo()" class="w-full bg-slate-800 hover:bg-slate-700 border border-purple-500/30 text-purple-400 font-bold py-2 rounded-lg text-[11px] transition">Redeem Code</button>
+            </div>
+        </div>
+
+        <!-- TAB 3: FRIENDS -->
+        <div id="tab-friends" class="space-y-3 hidden">
+            <h2 class="text-sm font-bold text-blue-400 flex items-center space-x-1.5"><span>👥</span><span>Referral Network</span></h2>
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-center space-y-3 shadow relative overflow-hidden">
+                <div class="absolute -right-8 -top-8 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="w-11 h-11 bg-blue-500/10 border border-blue-500/20 rounded-xl mx-auto flex items-center justify-center text-xl shadow-inner">🚀</div>
+                <div>
+                    <h3 class="text-xs font-bold text-white">+80 Gems Per Referral</h3>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Earn 10% commission from ad views!</p>
+                </div>
+                <div class="space-y-1 text-left">
+                    <label class="text-[9px] text-slate-400 font-medium">Your Unique Invite Link:</label>
+                    <input type="text" id="refLink" readonly class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-[10px] text-blue-300 text-center select-all focus:outline-none">
+                </div>
+                <button onclick="copyRefLink()" class="w-full bg-blue-500 hover:bg-blue-400 text-slate-950 font-bold py-2.5 rounded-xl text-[11px] transition shadow">Copy Invite Link</button>
+            </div>
+
+            <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 space-y-2">
+                <div class="flex justify-between items-center">
+                    <p class="text-[9px] text-slate-400 uppercase tracking-wider font-bold">Recent Referrals</p>
+                    <span id="referralCountBadge" class="text-[9px] bg-blue-500/10 border border-blue-500/30 text-blue-400 px-2 py-0.5 rounded-full font-bold">0 Joined</span>
+                </div>
+                <div id="referralsList" class="space-y-1.5 text-[10px] text-slate-300">
+                    <p class="text-slate-500 text-center py-2 text-[9px]">No referrals yet. Share your link!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: WALLET -->
+        <div id="tab-wallet" class="space-y-3 hidden">
+            <h2 class="text-sm font-bold text-emerald-400 flex items-center space-x-1.5"><span>💸</span><span>Withdrawal Portal</span></h2>
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3 shadow">
+                <div class="text-center pb-2.5 border-b border-slate-800">
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Available Payout Value</p>
+                    <h3 id="walletGemCount" class="text-2xl font-black text-blue-300 my-1">0 Coins</h3>
+                    <div class="inline-flex items-center space-x-1 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full mt-0.5">
+                        <span class="text-[10px] text-emerald-400 font-semibold">≈ <span id="walletUsdtValue">0.00</span> USDT</span>
+                    </div>
+                </div>
+                
+                <div class="space-y-1">
+                    <label class="text-[10px] text-slate-400 font-medium">USDT (TRC20 or TON) Address:</label>
+                    <input type="text" id="walletAddress" placeholder="Paste your wallet address..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-[11px] text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <button onclick="requestWithdrawal()" id="submitBtn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-[11px] transition shadow">
+                    Request USDT Payout
+                </button>
+            </div>
+
+            <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 space-y-2">
+                <p class="text-[9px] text-slate-400 uppercase tracking-wider font-bold">Recent Withdrawals</p>
+                <div id="withdrawalHistoryList" class="space-y-1.5 text-[10px] text-slate-300">
+                    <p class="text-slate-500 text-center py-2 text-[9px]">No withdrawal requests yet.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-[#030712]/95 backdrop-blur-lg border-t border-slate-800/80 flex justify-around p-2 z-50 max-w-sm mx-auto">
+        <button onclick="switchTab('home')" id="nav-home" class="flex flex-col items-center flex-1 py-1 text-blue-400 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span class="text-[9px] font-semibold mt-0.5">Home</span>
+        </button>
+        <button onclick="switchTab('earn')" id="nav-earn" class="flex flex-col items-center flex-1 py-1 text-slate-500 hover:text-slate-300 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span class="text-[9px] font-semibold mt-0.5">Earn</span>
+        </button>
+        <button onclick="switchTab('friends')" id="nav-friends" class="flex flex-col items-center flex-1 py-1 text-slate-500 hover:text-slate-300 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <span class="text-[9px] font-semibold mt-0.5">Friends</span>
+        </button>
+        <button onclick="switchTab('wallet')" id="nav-wallet" class="flex flex-col items-center flex-1 py-1 text-slate-500 hover:text-slate-300 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            <span class="text-[9px] font-semibold mt-0.5">Wallet</span>
+        </button>
+    </nav>
+
+    <!-- Script Logic -->
+    <script>
+        const tg = window.Telegram?.WebApp || {};
+        if (tg.expand) tg.expand();
+
+        let gems = parseInt(localStorage.getItem('gems')) || 0;
+        let joined = localStorage.getItem('joined_channel') === 'true';
+
+        const user = tg.initDataUnsafe?.user;
+        const userName = user ? (user.first_name || "Vic") : "Vic";
+        const userId = user ? user.id : "12345";
+        const botUsername = "YOUR_BOT_USERNAME"; 
+
+        document.getElementById('userNameDisplay').innerText = userName;
+        document.getElementById('refLink').value = `https://t.me/${botUsername}?start=ref_${userId}`;
+
+        updateUI();
+        renderWithdrawalHistory();
+        renderReferrals();
+        checkDailyClaimStatus();
+
+        let adController;
+        try {
+            if (window.Adsgram) {
+                adController = window.Adsgram.init({ blockId: "YOUR_ADSGRAM_BLOCK_ID" });
+            }
+        } catch (e) {
+            console.log("Adsgram SDK initialized in simulation mode.");
+        }
+
+        function triggerHaptic(style = 'medium') {
+            if (tg && tg.HapticFeedback && typeof tg.HapticFeedback.impactOccurred === 'function') {
+                tg.HapticFeedback.impactOccurred(style);
+            }
+        }
+
+        function showToast(message, icon = "📺") {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').innerText = message;
+            document.getElementById('toastIcon').innerText = icon;
+            toast.classList.remove('-translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('-translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function switchTab(tab) {
+            triggerHaptic('light');
+            const tabs = ['home', 'earn', 'friends', 'wallet'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const navBtn = document.getElementById(`nav-${t}`);
+                navBtn.classList.remove('text-blue-400', 'text-emerald-400');
+                navBtn.classList.add('text-slate-500');
+            });
+
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${tab}`);
+            activeNav.classList.remove('text-slate-500');
+            activeNav.classList.add(tab === 'wallet' ? 'text-emerald-400' : 'text-blue-400');
+            
+            if (tab === 'earn') {
+                checkDailyClaimStatus();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('gemCount').innerText = gems.toLocaleString();
+            document.getElementById('walletGemCount').innerText = gems.toLocaleString() + " Coins";
+            
+            let usdt = (gems * 0.00002).toFixed(4); 
+            document.getElementById('usdtValue').innerText = usdt;
+            document.getElementById('walletUsdtValue').innerText = usdt;
+            
+            let progress = Math.min((gems / 5000) * 100, 100);
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressText').innerText = `${gems.toLocaleString()} / 5,000 Coins`;
+            
+            localStorage.setItem('gems', gems);
+        }
+
+        function openSponsorLink() {
+            triggerHaptic('light');
+            window.open('https://t.me/YOUR_SPONSOR_CONTACT', '_blank');
+        }
+
+        function checkDailyClaimStatus() {
+            try {
+                const lastClaim = parseInt(localStorage.getItem('last_daily_claim')) || 0;
+                const now = Date.now();
+                const cooldown = 24 * 60 * 60 * 1000; // 24 hours
+                const btn = document.getElementById('dailyClaimBtn');
+                if (!btn) return;
+
+                if (now - lastClaim < cooldown) {
+                    const timeLeft = cooldown - (now - lastClaim);
+                    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                    btn.innerText = `CLAIMED (AVAILABLE IN ${hours}H ${minutes}M)`;
+                } else {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    btn.innerText = "CLAIM +10 GEMS";
+                }
+            } catch (err) {
+                console.error("Daily claim status error:", err);
+            }
+        }
+
+        function claimDailyReward() {
+            triggerHaptic('heavy');
+            const lastClaim = parseInt(localStorage.getItem('last_daily_claim')) || 0;
+            const now = Date.now();
+            const cooldown = 24 * 60 * 60 * 1000;
+
+            if (now - lastClaim < cooldown) {
+                showToast("Daily reward already claimed. Try again later!", "⏳");
+                return;
+            }
+
+            gems += 10;
+            localStorage.setItem('last_daily_claim', now.toString());
+            updateUI();
+            checkDailyClaimStatus();
+            showToast("Successfully claimed +10 Gems!", "🎁");
+        }
+
+        function renderReferrals() {
+            const list = document.getElementById('referralsList');
+            const badge = document.getElementById('referralCountBadge');
+            let refs = JSON.parse(localStorage.getItem('my_referrals')) || [
+                { name: "Alex_Crypto", date: "Yesterday", earned: 80 },
+                { name: "Satoshi_TON", date: "3 days ago", earned: 80 }
+            ];
+
+            if (badge) badge.innerText = `${refs.length} Joined`;
+            if (!list) return;
+
+            if (refs.length === 0) {
+                list.innerHTML = `<p class="text-slate-500 text-center py-2 text-[9px]">No referrals yet. Share link!</p>`;
+                return;
+            }
+
+            list.innerHTML = '';
+            refs.forEach(ref => {
+                const row = document.createElement('div');
+                row.className = 'flex justify-between items-center bg-slate-950/60 p-2 rounded-lg border border-slate-800/50';
+                row.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <div class="w-6 h-6 rounded-md bg-blue-500/10 border border-blue-500/20 flex items-center justify-center font-bold text-blue-400 text-[10px]">${ref.name.charAt(0)}</div>
+                        <div>
+                            <p class="font-bold text-slate-200">@${ref.name}</p>
+                            <p class="text-[8px] text-slate-500">${ref.date}</p>
+                        </div>
+                    </div>
+                    <span class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">+${ref.earned}</span>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        function renderWithdrawalHistory() {
+            const historyList = document.getElementById('withdrawalHistoryList');
+            if (!historyList) return;
+            
+            let history = JSON.parse(localStorage.getItem('user_withdrawals')) || [];
+
+            if (history.length === 0) {
+                historyList.innerHTML = `<p class="text-slate-500 text-center py-2 text-[9px]">No withdrawals yet.</p>`;
+                return;
+            }
+
+            historyList.innerHTML = '';
+            history.forEach(item => {
+                const maskedWallet = item.wallet.slice(0, 4) + '...' + item.wallet.slice(-4);
+                const row = document.createElement('div');
+                row.className = 'flex justify-between items-center bg-slate-950/60 p-2 rounded-lg border border-slate-800/50';
+                row.innerHTML = `
+                    <div>
+                        <p class="font-bold text-slate-200">${item.usdt} USDT <span class="text-[8px] text-slate-400 font-normal">(${item.gems.toLocaleString()} Coins)</span></p>
+                        <p class="text-[8px] text-slate-500 font-mono">${maskedWallet} • ${item.date}</p>
+                    </div>
+                    <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full ${item.status === 'Paid ✅' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">${item.status}</span>
+                `;
+                historyList.appendChild(row);
+            });
+        }
+
+        function markJoined() {
+            triggerHaptic('light');
+            localStorage.setItem('joined_channel', 'true');
+        }
+
+        function claimChannelBonus() {
+            triggerHaptic('heavy');
+            if (localStorage.getItem('channel_claimed') === 'true') {
+                showToast("Channel bonus already claimed!", "⚠️");
+                return;
+            }
+            gems += 500;
+            localStorage.setItem('channel_claimed', 'true');
+            updateUI();
+            showToast("Successfully added +500 Coins!", "🎉");
+        }
+
+        function redeemPromo() {
+            triggerHaptic('medium');
+            const codeInput = document.getElementById('promoInput');
+            if (!codeInput) return;
+            
+            const code = codeInput.value.trim().toUpperCase();
+            let redeemedCodes = JSON.parse(localStorage.getItem('redeemed_codes')) || [];
+            
+            if (!code) {
+                showToast("Please enter a promo code.", "⚠️");
+                return;
+            }
+            if (redeemedCodes.includes(code)) {
+                showToast("Promo code already used!", "❌");
+                return;
+            }
+
+            const validCodes = { "ADSPULSE500": 500, "WATCHADS": 300, "VIP1000": 1000 };
+
+            if (validCodes[code]) {
+                gems += validCodes[code];
+                redeemedCodes.push(code);
+                localStorage.setItem('redeemed_codes', JSON.stringify(redeemedCodes));
+                codeInput.value = '';
+                updateUI();
+                showToast(`Promo applied! +${validCodes[code]} Coins`, "🎁");
+            } else {
+                showToast("Invalid or expired promo code.", "❌");
+            }
+        }
+
+        function copyRefLink() {
+            triggerHaptic('light');
+            const copyText = document.getElementById('refLink');
+            if (!copyText) return;
+            copyText.select();
+            navigator.clipboard.writeText(copyText.value);
+            showToast("Invite link copied to clipboard!", "📋");
+        }
+
+        let adCooldownTimer = null;
+        function startAdCooldown(seconds) {
+            const btn = document.getElementById('watchAdBtn');
+            const txt = document.getElementById('watchAdText');
+            if (!btn || !txt) return;
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            let timeLeft = seconds;
+            adCooldownTimer = setInterval(() => {
+                txt.innerText = `COOLDOWN (${timeLeft}s)`;
+                timeLeft--;
+                if (timeLeft < 0) {
+                    clearInterval(adCooldownTimer);
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    txt.innerText = "WATCH AD TO EARN (+50 COINS)";
+                }
+            }, 1000);
+        }
+
+        async function watchAd() {
+            triggerHaptic('heavy');
+            if (!adController) {
+                gems += 50;
+                updateUI();
+                showToast("Ad watched (Simulation)! +50 Coins", "📺");
+                startAdCooldown(15);
+                return;
+            }
+
+            try {
+                await adController.show();
+                gems += 50;
+                updateUI();
+                showToast("Ad watched successfully! +50 Coins", "📺");
+                startAdCooldown(30);
+            } catch (err) {
+                showToast("Ad closed or unavailable. Try again.", "⚠️");
+            }
+        }
+
+        async function requestWithdrawal() {
+            triggerHaptic('heavy');
+            if (gems < 5000) {
+                showToast("Need at least 5,000 coins to withdraw!", "🔒");
+                return;
+            }
+
+            const walletInput = document.getElementById('walletAddress');
+            if (!walletInput) return;
+            
+            const wallet = walletInput.value.trim();
+            if (!wallet) {
+                showToast("Enter a valid USDT wallet address.", "⚠️");
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerText = "Processing Transaction...";
+            submitBtn.disabled = true;
+
+            const currentGems = gems;
+            const currentUsdt = (gems * 0.00002).toFixed(4);
+
+            try {
+                await fetch('/api/withdraw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: `@${user?.username || userName}`,
+                        userId: userId,
+                        gems: currentGems,
+                        usdt: currentUsdt,
+                        wallet: wallet
+                    })
+                });
+            } catch (e) {
+                console.log("Offline mode: Withdrawal queued locally.");
+            } finally {
+                let history = JSON.parse(localStorage.getItem('user_withdrawals')) || [];
+                history.unshift({
+                    date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                    gems: currentGems,
+                    usdt: currentUsdt,
+                    wallet: wallet,
+                    status: 'Pending ⏳'
+                });
+                localStorage.setItem('user_withdrawals', JSON.stringify(history));
+
+                gems = 0;
+                walletInput.value = '';
+                updateUI();
+                renderWithdrawalHistory();
+                submitBtn.innerText = "Request USDT Payout";
+                submitBtn.disabled = false;
+                switchTab('wallet');
+                showToast("Withdrawal request submitted!", "✅");
+            }
+        }
+    </script>
+</body>
+  </html>
+  
